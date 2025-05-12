@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
 import approuter from './routes';
+import dotenv from 'dotenv';
 // Create an instance of Express
 const app = express();
+dotenv.config();
 
 // Middleware to parse JSON
 app.use(express.json());

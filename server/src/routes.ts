@@ -13,9 +13,16 @@ const systemPrompt = `You are a helpful AI assistant. Follow these rules:
 - Format output as plain text only`;
 
 const approuter = Router();
-approuter.post("/generate", async (req: Request, res: Response) => {
+approuter.post("/generate", async (req: Request, res: Response): Promise<void> => {
   const { text } = req.body;
-  const ai = new GoogleGenAI({ apiKey: "" });
+
+  if (!process.env.GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY is not defined in environment variables');
+    res.status(500).json({ error: 'API key not configured' });
+    return;
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
      
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
@@ -26,6 +33,11 @@ approuter.post("/generate", async (req: Request, res: Response) => {
   });
   
   res.json({ generatedText: response.text });
+  return;
+});
+
+approuter.get("/execute", async (req: Request, res: Response): Promise<void> => {
+  
 });
 
 export default approuter;
