@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-
+import approuter from './routes';
 // Create an instance of Express
 const app = express();
 
@@ -8,8 +8,9 @@ app.use(express.json());
 
 // Define a basic route
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, World 2!');
+  res.send('Server is running!');
 });
+app.use('/api', approuter);
 
 // Start the server
 const PORT = process.env.PORT || 5000;
