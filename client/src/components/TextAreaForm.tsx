@@ -30,32 +30,47 @@ const FormSchema = z.object({
 
 export function TextareaForm() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
     })
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
-        // Handle form submission
         console.log("Form submitted:", data);
         setIsLoading(true);
+        setVideoUrl(null);
 
-        // Make an API call to your server
         try {
-            const response = await axios.post("http://localhost:5000/api/generate", { text: data.desc });
-            console.log("Response from server:", response.data);
-            // Add 2 sec delay
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            // Handle the response from the server
+            
+            const genResponse = await axios.post("http://localhost:5000/api/generate", { text: data.desc });
+            console.log("Code generation response:", genResponse.data);
+            
+            setGeneratedCode(genResponse.data.generatedText);
+            toast("Code Generated", {
+                description: "Now creating your animation...",
+            });
+
+
+            const execResponse = await axios.post("http://localhost:5000/api/execute", 
+                { code: genResponse.data.generatedText },
+                { responseType: 'blob' }
+            );
+
+            // Create a URL for the video blob
+            const videoBlob = new Blob([execResponse.data], { type: 'video/mp4' });
+            const url = URL.createObjectURL(videoBlob);
+            setVideoUrl(url);
+            
             toast("Success", {
-                description: "Your animation is being created",
-            })
+                description: "Your animation is ready!",
+            });
         } catch (error) {
             console.error("Error:", error);
-            // Handle any errors
             toast("Error", {
                 description: "There was an error creating your animation",
-            })
+            });
         } finally {
             setIsLoading(false);
         }
@@ -85,17 +100,57 @@ export function TextareaForm() {
                     )}
                 />
                 <Button disabled={isLoading} type="submit">
-                {isLoading ? (
-                    <>
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Creating...
-                    </>
-                ) : (
-                    <>
-                    Create Animation <SendHorizontal className="ml-2" />
-                    </>
-                )}
+                    {isLoading ? (
+                        <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        Creating...
+                        </>
+                    ) : (
+                        <>
+                        Create Animation <SendHorizontal className="ml-2" />
+                        </>
+                    )}
                 </Button>
+
+                {/* Display generated code */}
+                {generatedCode && (
+                    <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+                        <h3 className="text-sm font-medium mb-2">Generated Python Code:</h3>
+                        <pre className="text-sm overflow-x-auto">
+                            {generatedCode}
+                        </pre>
+                    </div>
+                )}
+
+                
+                {videoUrl && (
+                    <div className="mt-4">
+                        <h3 className="text-sm font-medium mb-2">Generated Animation:</h3>
+                        <div className="rounded-lg overflow-hidden">
+                            <video
+                                controls
+                                className="w-full"
+                                src={videoUrl}
+                                onError={(e) => console.error("Video error:", e)}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <Button 
+                            className="mt-2"
+                            onClick={() => {
+                                const a = document.createElement('a');
+                                a.href = videoUrl;
+                                a.download = 'animation.mp4';
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }}
+                        >
+                            Download Animation
+                        </Button>
+                    </div>
+                )}
             </form>
         </Form>
     )
