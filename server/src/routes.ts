@@ -23,19 +23,19 @@ approuter.post("/generate", async (req: Request, res: Response): Promise<void> =
   }
 
   // Commented for dev purpose
-  // const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
      
-  // const response = await ai.models.generateContent({
-  //   model: "gemini-2.0-flash",
-  //   contents: text ,
-  //   config: {
-  //     systemInstruction: systemPrompt,
-  //   },
-  // });
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: text ,
+    config: {
+      systemInstruction: systemPrompt,
+    },
+  });
 
-  const response = {
-    text : "```python\nfrom manim import *\n\nclass SquareToCircle(Scene):\n    def construct(self):\n        square = Square()\n        circle = Circle()\n        self.play(Create(square))\n        self.wait(1)\n        self.play(Transform(square, circle))\n        self.wait(1)\n        self.play(Uncreate(circle))\n        self.wait(1)\n\n```\n"
-  }
+  // const response = {
+  //   text : "```python\nfrom manim import *\n\nclass SquareToCircle(Scene):\n    def construct(self):\n        square = Square()\n        circle = Circle()\n        self.play(Create(square))\n        self.wait(1)\n        self.play(Transform(square, circle))\n        self.wait(1)\n        self.play(Uncreate(circle))\n        self.wait(1)\n\n```\n"
+  // }
   
   res.json({ 
     generatedText: response.text
@@ -83,31 +83,32 @@ async function runDocker(markdownCode: string): Promise<{videoPath: string}> {
     const { exec } = require('child_process');
     
     function sanitizeCode(text: string): string {
-        
         const pythonCodeMatch = text.match(/```python\n([\s\S]*?)\n```/);
         if (!pythonCodeMatch) {
             throw new Error('Invalid Python code format');
         }
-        
-        // Get the code content and ensure proper line endings
-        const cleanCode = pythonCodeMatch[1].trim();
-        return cleanCode + '\n';
+        return pythonCodeMatch[1].trim() + '\n';
+    }
+
+    function extractClassName(code: string): string {
+        const classMatch = code.match(/class\s+(\w+)\s*\(\s*Scene\s*\)/);
+        if (!classMatch) {
+            throw new Error('No Scene class found in the Python code');
+        }
+        return classMatch[1];
     }
     
     try {
-        
         const code = sanitizeCode(markdownCode);
-        
+        const className = extractClassName(code);
         
         const manimDir = path.join(__dirname, '..', 'manim_files');
         await fs.mkdir(manimDir, { recursive: true });
         
-        
         const pythonFile = path.join(manimDir, 'test_scenes.py');
         await fs.writeFile(pythonFile, code);
         
-        
-        const dockerCommand = `docker run --rm -v "${manimDir}:/manim" manimcommunity/manim manim -qm test_scenes.py SquareToCircle`;
+        const dockerCommand = `docker run --rm -v "${manimDir}:/manim" manimcommunity/manim manim -qm test_scenes.py ${className}`;
         
         return new Promise((resolve, reject) => {
             exec(dockerCommand, (error: Error | null, stdout: string, stderr: string) => {
@@ -119,9 +120,7 @@ async function runDocker(markdownCode: string): Promise<{videoPath: string}> {
                 
                 console.log('Docker output:', stdout);
                 
-                
-                const videoPath = path.join(manimDir, 'media', 'videos', 'test_scenes', '720p30', 'SquareToCircle.mp4');
-                
+                const videoPath = path.join(manimDir, 'media', 'videos', 'test_scenes', '720p30', `${className}.mp4`);
                 
                 fs.access(videoPath)
                     .then(() => {
@@ -137,6 +136,5 @@ async function runDocker(markdownCode: string): Promise<{videoPath: string}> {
         throw error;
     }
 }
-
 
 export default approuter;
