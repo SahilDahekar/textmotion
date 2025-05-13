@@ -1,4 +1,7 @@
-# textmotion
-Generate 2d video using text prompts and ai
+# Textmotion
+Generate 2d animation from text using ai
 
-![Current architecture](image.png)
+![Current architecture](https://github.com/user-attachments/assets/609e7651-20d6-48a0-b15a-646579475d82)
+
+![Desktop App UI Layout](https://github.com/user-attachments/assets/96008e5e-c8b9-41ae-bedc-9fd77230af9b)
+
