@@ -1,9 +1,18 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import approuter from './routes';
 import dotenv from 'dotenv';
 // Create an instance of Express
 const app = express();
 dotenv.config();
+
+const corsOptions = {
+    origin: 'http://localhost:3000',  // Replace with your specific origin
+    credentials : true,
+    optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 // Middleware to parse JSON
 app.use(express.json());

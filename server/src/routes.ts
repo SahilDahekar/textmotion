@@ -22,15 +22,25 @@ approuter.post("/generate", async (req: Request, res: Response): Promise<void> =
     return;
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  // Commented for dev purpose
+  // const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
      
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: text ,
-    config: {
-      systemInstruction: systemPrompt,
-    },
-  });
+  // const response = await ai.models.generateContent({
+  //   model: "gemini-2.0-flash",
+  //   contents: text ,
+  //   config: {
+  //     systemInstruction: systemPrompt,
+  //   },
+  // });
+
+  const response = {
+    text : "```python\nfrom manim import *\n\nclass SquareToCircle(Scene):\n    def construct(self):\n        square = Square()\n        circle = Circle()\n        self.play(Create(square))\n        self.wait(1)\n        self.play(Transform(square, circle))\n        self.wait(1)\n        self.play(Uncreate(circle))\n        self.wait(1)\n\n```\n"
+  }
+
+  // Example response structure
+  // {
+  //   "generatedText": "```python\nfrom manim import *\n\nclass SquareToCircle(Scene):\n    def construct(self):\n        square = Square()\n        circle = Circle()\n        self.play(Create(square))\n        self.wait(1)\n        self.play(Transform(square, circle))\n        self.wait(1)\n        self.play(Uncreate(circle))\n        self.wait(1)\n\n```\n"
+  // }
   
   res.json({ generatedText: response.text });
   return;
