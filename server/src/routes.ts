@@ -2,15 +2,25 @@ import { Router } from "express";
 import { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 
-const systemPrompt = `You are a helpful AI assistant. Follow these rules:
-- Provide direct code responses without explanations
-- Use clear, concise language
-- Avoid markdown or special formatting
-- Focus on practical, implementable solutions
-- Do not generate harmful or inappropriate content
-- Keep responses focused on the specific task
-- Do not use escape sequences or special characters
-- Format output as plain text only`;
+const systemPrompt = `You are a Manim animation code generator. Generate only Python code for Manim animations with these exact requirements:
+\`\`\`python
+from manim import *
+
+class YourClassName(Scene):
+    def construct(self):
+        # Your animation code here
+        self.play()
+        self.wait()
+\`\`\`
+
+Rules:
+- Output must be exactly in the format shown above
+- Use only valid Manim objects and methods
+- Create visually appealing mathematical animations
+- Class name should reflect the animation content
+- Include proper timing in self.play() and self.wait() calls
+- No text or explanations outside the code block
+- No additional formatting or markdown`;
 
 const approuter = Router();
 approuter.post("/generate", async (req: Request, res: Response): Promise<void> => {
@@ -77,26 +87,26 @@ approuter.post("/execute", async (req: Request, res: Response): Promise<void> =>
   }
 });
 
+function sanitizeCode(text: string): string {
+    const pythonCodeMatch = text.match(/```python\n([\s\S]*?)\n```/);
+    if (!pythonCodeMatch) {
+        throw new Error('Invalid Python code format');
+    }
+    return pythonCodeMatch[1].trim() + '\n';
+}
+
+function extractClassName(code: string): string {
+    const classMatch = code.match(/class\s+(\w+)\s*\(\s*Scene\s*\)/);
+    if (!classMatch) {
+        throw new Error('No Scene class found in the Python code');
+    }
+    return classMatch[1];
+}
+
 async function runDocker(markdownCode: string): Promise<{videoPath: string}> {
     const fs = require('fs').promises;
     const path = require('path');
     const { exec } = require('child_process');
-    
-    function sanitizeCode(text: string): string {
-        const pythonCodeMatch = text.match(/```python\n([\s\S]*?)\n```/);
-        if (!pythonCodeMatch) {
-            throw new Error('Invalid Python code format');
-        }
-        return pythonCodeMatch[1].trim() + '\n';
-    }
-
-    function extractClassName(code: string): string {
-        const classMatch = code.match(/class\s+(\w+)\s*\(\s*Scene\s*\)/);
-        if (!classMatch) {
-            throw new Error('No Scene class found in the Python code');
-        }
-        return classMatch[1];
-    }
     
     try {
         const code = sanitizeCode(markdownCode);

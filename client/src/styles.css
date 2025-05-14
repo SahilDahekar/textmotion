@@ -3,6 +3,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: ArmagedaWide;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/Armageda-Wide.ttf") format("TrueType");
+}
+
 body {
   @apply m-0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
@@ -18,6 +25,7 @@ code {
 }
 
 @theme inline {
+  --font-armageda: "ArmagedaWide", sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
