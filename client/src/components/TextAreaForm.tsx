@@ -75,43 +75,50 @@ export function TextareaForm() {
         } finally {
             setIsLoading(false);
         }
-    }
-
-    return (
-        <div className="space-y-8">
+    }    return (
+        <div className="space-y-12">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 mx-auto space-y-4">
-                    <FormField
-                        control={form.control}
-                        name="desc"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder="Tell us about your requirements here..."
-                                        className="resize-none"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                                <FormDescription>
-                                    Describe how you want your animation to be and let use handle how to generate it.
-                                </FormDescription>
-                            </FormItem>
-                        )}
-                    />
-                    <Button disabled={isLoading} type="submit">
-                        {isLoading ? (
-                            <>
-                            <Loader className="h-4 w-4 animate-spin" />
-                            Creating...
-                            </>
-                        ) : (
-                            <>
-                            Create Animation <SendHorizontal className="ml-2" />
-                            </>
-                        )}
-                    </Button>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="border rounded-lg p-6 shadow-sm">
+                        <FormField
+                            control={form.control}
+                            name="desc"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>                                          
+                                        <Textarea
+                                            placeholder="Describe your animation (e.g., 'Transform a square into a rotating circle')"
+                                            className="resize-none min-h-[120px] text-base"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage className="text-sm" />
+                                    <FormDescription className="text-sm mt-2.5 text-muted-foreground">
+                                        Turn your mathematical concepts into beautiful animations with a simple description.
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                        <div className="mt-6 flex justify-end">
+                            <Button 
+                                disabled={isLoading} 
+                                type="submit"
+                                size="lg"
+                                className="px-8"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        Create Animation <SendHorizontal className="ml-2" />
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
                 </form>
             </Form>
 

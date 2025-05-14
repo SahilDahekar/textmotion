@@ -6,44 +6,51 @@ interface GeneratedContentProps {
     videoUrl: string | null;
 }
 
-export function GeneratedContent({ generatedCode, videoUrl }: GeneratedContentProps) {
-    return (
-        <div className="w-2/3 mx-auto space-y-4">
+export function GeneratedContent({ generatedCode, videoUrl }: GeneratedContentProps) {    return (
+        <div className="space-y-8">
             {generatedCode && (
-                <div className="p-4 bg-gray-100 rounded-lg">
-                    <h3 className="text-sm font-medium mb-2">Generated Python Code:</h3>
-                    <pre className="text-sm overflow-x-auto">
+                <div className="border rounded-lg shadow-sm overflow-hidden">
+                    <div className="border-b bg-muted/50 px-4 py-3">
+                        <h3 className="font-medium">Generated Python Code</h3>
+                    </div>
+                    <pre className="p-4 text-sm overflow-x-auto bg-muted/10">
                         {generatedCode}
                     </pre>
                 </div>
             )}
 
             {videoUrl && (
-                <div>
-                    <h3 className="text-sm font-medium mb-2">Generated Animation:</h3>
-                    <div className="rounded-lg overflow-hidden">
-                        <video
-                            controls
-                            className="w-full"
-                            src={videoUrl}
-                            onError={(e) => console.error("Video error:", e)}
-                        >
-                            Your browser does not support the video tag.
-                        </video>
+                <div className="border rounded-lg shadow-sm overflow-hidden">
+                    <div className="border-b bg-muted/50 px-4 py-3">
+                        <h3 className="font-medium">Generated Animation</h3>
                     </div>
-                    <Button 
-                        className="mt-2"
-                        onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = videoUrl;
-                            a.download = 'animation.mp4';
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                        }}
-                    >
-                        <Download/> Download Video
-                    </Button>
+                    <div className="p-4">
+                        <div className="rounded-lg overflow-hidden bg-black">
+                            <video
+                                controls
+                                className="w-full aspect-video"
+                                src={videoUrl}
+                                onError={(e) => console.error("Video error:", e)}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <Button 
+                                size="lg"
+                                onClick={() => {
+                                    const a = document.createElement('a');
+                                    a.href = videoUrl;
+                                    a.download = 'animation.mp4';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                }}
+                            >
+                                <Download className="mr-2 h-4 w-4" /> Download Video
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
