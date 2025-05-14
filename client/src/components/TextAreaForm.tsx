@@ -47,9 +47,9 @@ export function TextareaForm() {
             
             const genResponse = await axios.post("http://localhost:5000/api/generate", { text: data.desc });
             console.log("Code generation response:", genResponse.data);
-            
-            setGeneratedCode(genResponse.data.generatedText);
-            toast("Code Generated", {
+            const sanitizedCode = genResponse.data.generatedText.match(/```python\n([\s\S]*?)\n```/);
+            setGeneratedCode(sanitizedCode[1].trim() + '\n');
+            toast.info("Code Generated", {
                 description: "Now creating your animation...",
             });
 
@@ -64,12 +64,12 @@ export function TextareaForm() {
             const url = URL.createObjectURL(videoBlob);
             setVideoUrl(url);
             
-            toast("Success", {
+            toast.success("Success", {
                 description: "Your animation is ready!",
             });
         } catch (error) {
             console.error("Error:", error);
-            toast("Error", {
+            toast.error("Error", {
                 description: "There was an error creating your animation",
             });
         } finally {
@@ -85,39 +85,37 @@ export function TextareaForm() {
                             name="desc"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormControl>                                          
-                                        <Textarea
-                                            placeholder="Describe your animation (e.g., 'Transform a square into a rotating circle')"
-                                            className="resize-none min-h-[120px] text-base"
-                                            {...field}
-                                        />
+                                    <FormControl>
+                                        <div className="relative">                                              <Textarea
+                                                placeholder="Describe your animation (e.g., 'Transform a square into a rotating circle')"
+                                                className="resize-none min-h-[120px] pb-16 w-full break-words whitespace-pre-wrap"
+                                                {...field}
+                                            />
+                                            <div className="absolute bottom-4 right-4">
+                                                <Button 
+                                                    disabled={isLoading} 
+                                                    type="submit"
+                                                    size="lg"
+                                                    className="px-8 shadow-sm"
+                                                >
+                                                    {isLoading ? (
+                                                        <>
+                                                            <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                                            Creating...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            Create <SendHorizontal className="" />
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </FormControl>
                                     <FormMessage className="text-sm" />
-                                    <FormDescription className="text-sm mt-2.5 text-muted-foreground">
-                                        Turn your mathematical concepts into beautiful animations with a simple description.
-                                    </FormDescription>
                                 </FormItem>
                             )}
                         />
-                        <div className="mt-6 flex justify-end">
-                            <Button 
-                                disabled={isLoading} 
-                                type="submit"
-                                size="lg"
-                                className="px-8"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader className="mr-2 h-4 w-4 animate-spin" />
-                                        Creating...
-                                    </>
-                                ) : (
-                                    <>
-                                        Create Animation <SendHorizontal className="ml-2" />
-                                    </>
-                                )}
-                            </Button>
-                        </div>
                     </div>
                 </form>
             </Form>
