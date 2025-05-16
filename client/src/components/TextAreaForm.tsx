@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react";
-import { GeneratedContent } from "./GeneratedContent"
+import { useNavigate } from "@tanstack/react-router";
 
 const FormSchema = z.object({
     desc: z
@@ -31,53 +31,31 @@ const FormSchema = z.object({
 
 export function TextareaForm() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [videoUrl, setVideoUrl] = useState<string | null>(null);
-    const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
-    })
-
-    async function onSubmit(data: z.infer<typeof FormSchema>) {
-        console.log("Form submitted:", data);
+    });    
+      async function onSubmit(data: z.infer<typeof FormSchema>) {
         setIsLoading(true);
-        setVideoUrl(null);
-
         try {
-            
-            const genResponse = await axios.post("http://localhost:5000/api/generate", { text: data.desc });
-            console.log("Code generation response:", genResponse.data);
-            const sanitizedCode = genResponse.data.generatedText.match(/```python\n([\s\S]*?)\n```/);
-            setGeneratedCode(sanitizedCode[1].trim() + '\n');
-            toast.info("Code Generated", {
-                description: "Now creating your animation...",
-            });
-
-
-            const execResponse = await axios.post("http://localhost:5000/api/execute", 
-                { code: genResponse.data.generatedText },
-                { responseType: 'blob' }
-            );
-
-            // Create a URL for the video blob
-            const videoBlob = new Blob([execResponse.data], { type: 'video/mp4' });
-            const url = URL.createObjectURL(videoBlob);
-            setVideoUrl(url);
-            
-            toast.success("Success", {
-                description: "Your animation is ready!",
+            // Generate a unique ID for the conversation
+            const id = Math.random().toString(36).substring(2);
+            await navigate({ 
+                to: '/generate/$id', 
+                params: { id },
+                search: { text: data.desc }
             });
         } catch (error) {
             console.error("Error:", error);
             toast.error("Error", {
-                description: "There was an error creating your animation",
+                description: "There was an error navigating to the generation page",
             });
         } finally {
             setIsLoading(false);
         }
     }    return (
-        <div className="space-y-12">
-            <Form {...form}>
+        <div className="space-y-12">            <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="border rounded-lg p-6 shadow-sm">
                         <FormField
@@ -119,11 +97,6 @@ export function TextareaForm() {
                     </div>
                 </form>
             </Form>
-
-            <GeneratedContent 
-                generatedCode={generatedCode}
-                videoUrl={videoUrl}
-            />
         </div>
     )
 }
