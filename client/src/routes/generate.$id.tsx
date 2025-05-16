@@ -28,8 +28,10 @@ function GeneratePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [generatedCode, setGeneratedCode] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
+  const [hasGenerated, setHasGenerated] = useState(false)
 
   async function handleGenerateAnimation(text: string) {
+    if(isLoading) return
     setIsLoading(true)
     try {
       const genResponse = await axios.post("http://localhost:5000/api/generate", { text });
@@ -76,14 +78,28 @@ function GeneratePage() {
       setIsLoading(false)
     }
   }
-
   // Handle initial text from search params
   useEffect(() => {
-    if (search.text) {
-      setMessages([{ type: 'user', content: search.text }])
-      handleGenerateAnimation(search.text)
+    if (search.text && messages.length === 0) {
+      setMessages([{ type: 'user', content: search.text }]);
+      setHasGenerated(false);
     }
-  }, [search.text])
+    // eslint-disable-next-line
+  }, [search.text]);
+
+  // When the initial user message is set, trigger the animation only once
+  useEffect(() => {
+    if (
+      messages.length === 1 &&
+      messages[0].type === 'user' &&
+      search.text &&
+      !hasGenerated
+    ) {
+      setHasGenerated(true);
+      handleGenerateAnimation(search.text);
+    }
+    // eslint-disable-next-line
+  }, [messages, search.text]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
