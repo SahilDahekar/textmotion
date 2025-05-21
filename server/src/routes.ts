@@ -26,6 +26,7 @@ const approuter = Router();
 approuter.post("/generate", async (req: Request, res: Response): Promise<void> => {
   const { text } = req.body;
 
+  
   if (!process.env.GEMINI_API_KEY) {
     console.error('GEMINI_API_KEY is not defined in environment variables');
     res.status(500).json({ error: 'API key not configured' });
