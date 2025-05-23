@@ -1,6 +1,16 @@
-import { Router } from "express";
+import { response, Router } from "express";
 import { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
+import axios from "axios";
+
+
+interface LambdaRequest {
+  python_code: string;
+  id: string;
+  filename: string;
+  project_name: string;
+}
+
 
 const systemPrompt = `You are a Manim animation code generator. Generate only Python code for Manim animations with these exact requirements:
 \`\`\`python
@@ -26,7 +36,7 @@ const approuter = Router();
 approuter.post("/generate", async (req: Request, res: Response): Promise<void> => {
   const { text } = req.body;
 
-  
+
   if (!process.env.GEMINI_API_KEY) {
     console.error('GEMINI_API_KEY is not defined in environment variables');
     res.status(500).json({ error: 'API key not configured' });
@@ -47,7 +57,7 @@ approuter.post("/generate", async (req: Request, res: Response): Promise<void> =
   // const response = {
   //   text : "```python\nfrom manim import *\n\nclass SquareToCircle(Scene):\n    def construct(self):\n        square = Square()\n        circle = Circle()\n        self.play(Create(square))\n        self.wait(1)\n        self.play(Transform(square, circle))\n        self.wait(1)\n        self.play(Uncreate(circle))\n        self.wait(1)\n\n```\n"
   // }
-  
+
   res.json({ 
     generatedText: response.text
   });
@@ -56,33 +66,68 @@ approuter.post("/generate", async (req: Request, res: Response): Promise<void> =
 
 approuter.post("/execute", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { code } = req.body;
+    const { id , code , filename , project_name  } = req.body;
     if (!code) {
       res.status(400).json({ error: 'No code provided' });
       return;
     }
+    console.log("generated code: " + code);
+    
+    const payload: LambdaRequest = {
+      python_code: code,
+      //"from manim import *\n\nclass QuickSortAnimation(Scene):\n    def construct(self):\n        square = Triangle()\n        circle = Circle()\n        self.play(Transform(square, circle))",
+      id: id,
+      filename: filename,
+      project_name: project_name
+    };
+    
+    const externalUrl: string | undefined = process.env.LAMDA_FUNCTION_URL;
+    if (!externalUrl) {
+      throw new Error("LAMDA_FUNCTION_URL is not defined in environment variables.");
+    }
 
-    const result = await runDocker(code);
-    
-    
-    const fs = require('fs');
-    const videoPath = result.videoPath;
-    const stat = fs.statSync(videoPath);
-    
-    res.writeHead(200, {
-      'Content-Type': 'video/mp4',
-      'Content-Length': stat.size,
-      'Content-Disposition': 'attachment; filename=animation.mp4'
+    const response = await axios.post(externalUrl, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000*15, 
     });
+    if (response.status !== 200 || !response.data) {
+      res.status(500).json({ error: 'Lambda function failed', details: response.data });
+      return;
+    }
+    console.log("Lambda response:", response);
+    const { video_url, message } = response.data;
+
+    res.status(200).json({
+      video_url: video_url,
+      message
+    });
+    // const result = await runDocker(code);
+    
+    
+    // const fs = require('fs');
+    // const videoPath = result.videoPath;
+    // const stat = fs.statSync(videoPath);
+    
+    // res.writeHead(200, {
+    //   'Content-Type': 'video/mp4',
+    //   'Content-Length': stat.size,
+    //   'Content-Disposition': 'attachment; filename=animation.mp4'
+    // });
 
     
-    const videoStream = fs.createReadStream(videoPath);
-    videoStream.pipe(res);
+    // const videoStream = fs.createReadStream(videoPath);
+    // videoStream.pipe(res);
   } catch (error) {
-    console.error('Error executing code:', error);
+    // console.error('Error executing code:', error);
+    // const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // res.status(500).json({ 
+    //   error: 'Failed to execute animation',
+    //   details: errorMessage
+    // });
+    console.error('Error calling Lambda:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ 
-      error: 'Failed to execute animation',
+      error: 'Lambda invocation failed',
       details: errorMessage
     });
   }

@@ -4,21 +4,19 @@ import uuid
 import boto3
 from io import BytesIO
 import json
+import re
 from boto3.s3.transfer import S3UploadFailedError
 from botocore.exceptions import ClientError
-import logging
-import re
-
 
 def lambda_handler(event, context):
-
-    python_code = event.get('python_code')
-    id = event.get('id', str(uuid.uuid4()))
+    body = json.loads(event.get('body', '{}'))
+    python_code = body.get('python_code')
+    filename = body.get('filename')
+    project_name = body.get('project_name')
+    id = body.get('id', str(uuid.uuid4()))
     s3_bucket_name = os.environ.get('S3_BUCKET_NAME')
     bucket_region = 'ap-south-1'
-    s3_config = boto3.session.Config(
-        signature_version='s3v4',
-    )
+    s3_config = boto3.session.Config(signature_version='s3v4')
 
     if not python_code:
         return {
@@ -40,22 +38,18 @@ def lambda_handler(event, context):
     manim_output_filename = f"{filename}.mp4"
     s3_object_key = f"{id}/{project_name}/{manim_output_filename}"
 
+    # Extract the class name from the Manim code
     class_match = re.search(r'class\s+(\w+)', python_code)
     if not class_match:
         return {
             'statusCode': 400,
             'body': json.dumps({'error': 'No class found in provided Python code'})
         }
-    
+
     class_name = class_match.group(1)
 
     session = boto3.session.Session()
-    s3_client = session.client(
-        's3',
-        region_name=bucket_region,
-        config=s3_config
-    )
-
+    s3_client = session.client('s3', region_name=bucket_region, config=s3_config)
 
     try:
         with open(code_file_path, "w") as f:
@@ -77,7 +71,6 @@ def lambda_handler(event, context):
             "--disable_caching"
         ]
 
-
         result = subprocess.run(manim_command, capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -91,6 +84,7 @@ def lambda_handler(event, context):
                 })
             }
 
+        # Locate the generated .mp4 file
         found_mp4_path = None
         search_base_dir = os.path.join(job_tmp_dir, "videos")
 
@@ -107,7 +101,11 @@ def lambda_handler(event, context):
             debug_info = {}
             try:
                 if os.path.exists(search_base_dir):
-                    debug_info['search_dir_contents'] = [os.path.join(r, f) for r, d, fs in os.walk(search_base_dir) for f in fs]
+                    debug_info['search_dir_contents'] = [
+                        os.path.join(r, f)
+                        for r, d, fs in os.walk(search_base_dir)
+                        for f in fs
+                    ]
                 else:
                     debug_info['search_base_dir_exists'] = False
                 debug_info['job_tmp_contents'] = os.listdir(job_tmp_dir)
@@ -135,8 +133,8 @@ def lambda_handler(event, context):
                 })
             }
 
+        # Upload to S3 via presigned URL (fallback to direct upload)
         try:
-
             try:
                 presigned_url = s3_client.generate_presigned_url(
                     'put_object',
@@ -148,7 +146,6 @@ def lambda_handler(event, context):
                     ExpiresIn=300
                 )
 
-
                 import requests
                 with open(found_mp4_path, 'rb') as file_data:
                     response = requests.put(
@@ -159,9 +156,8 @@ def lambda_handler(event, context):
                     if response.status_code != 200:
                         raise Exception(f"Presigned URL upload failed with status {response.status_code}: {response.text}")
 
-
             except Exception as presigned_err:
-
+                # Fallback: use direct upload
                 with open(found_mp4_path, 'rb') as file_data:
                     s3_client.put_object(
                         Body=file_data,
@@ -170,7 +166,17 @@ def lambda_handler(event, context):
                         ContentType='video/mp4'
                     )
 
+            # ✅ Generate a presigned URL for downloading the video
+            try:
+                presigned_download_url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': s3_bucket_name, 'Key': s3_object_key},
+                    ExpiresIn=3600  # 1 hour
+                )
+            except Exception as presigned_download_err:
+                presigned_download_url = None
 
+            # Clean up
             try:
                 os.remove(found_mp4_path)
             except OSError:
@@ -202,7 +208,6 @@ def lambda_handler(event, context):
             except Exception as sts_err:
                 diagnostics['sts_error'] = str(sts_err)
 
-
             return {
                 'statusCode': 500,
                 'body': json.dumps({
@@ -216,26 +221,22 @@ def lambda_handler(event, context):
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'id': id+{filename},
+                'id': f"{id}_{filename}",
                 'message': 'Successfully generated video and uploaded to S3',
                 's3_bucket': s3_bucket_name,
                 's3_key': s3_object_key,
-                'class_name': class_name
+                'class_name': class_name,
+                'video_url': presigned_download_url  # ✅ Included in response
             })
         }
 
     except Exception as e:
-        error_message = str(e)
-
-
         import traceback
         traceback_str = traceback.format_exc()
-
-
         return {
             'statusCode': 500,
             'body': json.dumps({
-                'error': f'An unexpected error occurred: {error_message}',
+                'error': f'An unexpected error occurred: {str(e)}',
                 'traceback': traceback_str
             })
         }
