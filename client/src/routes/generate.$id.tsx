@@ -12,6 +12,14 @@ interface Message {
   content: string
 }
 
+interface ExecutionRequest {
+  code: string;
+  id: string;
+  filename: string;
+  project_name: string;
+}
+
+
 export const Route = createFileRoute('/generate/$id')({
   component: GeneratePage,
   validateSearch: (search: Record<string, unknown>) => {
@@ -33,6 +41,7 @@ function GeneratePage() {
 
   async function handleGenerateAnimation(text: string) {
     if(isLoading) return
+
     setIsLoading(true)
     try {
       const genResponse = await axios.post("http://localhost:5000/api/generate", { text });
@@ -49,15 +58,26 @@ function GeneratePage() {
       toast.info('Generating animation from code', {
         description: 'This may take a few seconds.',
       })
+      console.log("sending this code" + sanitizedCode[1]);
+      const payload: ExecutionRequest = {
+        code: sanitizedCode[1],
+        id: "may2025",
+        filename: "name",
+        project_name: id,
+      };
+      
+      const execResponse = await axios.post("http://localhost:5000/api/execute", payload ,{
+        timeout: 10000 * 15,
+      });
+      console.log('Lambda response:', execResponse.data);
+      // const execResponse = await axios.post("http://localhost:5000/api/execute", 
+      //   payload,
+      //   { responseType: 'blob' }
+      // );
 
-      const execResponse = await axios.post("http://localhost:5000/api/execute", 
-        { code: genResponse.data.generatedText },
-        { responseType: 'blob' }
-      );
-
-      const videoBlob = new Blob([execResponse.data], { type: 'video/mp4' });
-      const url = URL.createObjectURL(videoBlob);
-      setVideoUrl(url);
+      // const videoBlob = new Blob([execResponse.data], { type: 'video/mp4' });
+      // const url = URL.createObjectURL(videoBlob);
+      setVideoUrl(execResponse.data.video_url);
       
       setMessages(prev => [...prev, { 
         type: 'assistant', 
