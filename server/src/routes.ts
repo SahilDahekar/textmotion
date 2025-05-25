@@ -30,6 +30,7 @@ Rules:
 - Class name should reflect the animation content
 - Include proper timing in self.play() and self.wait() calls
 - No text or explanations outside the code block
+- Ensure animation principles are followed i.e. smooth transitions, clear visibility , non-overlapping objects/texts
 - No additional formatting or markdown`;
 
 const approuter = Router();
@@ -74,8 +75,8 @@ approuter.post("/execute", async (req: Request, res: Response): Promise<void> =>
     console.log("generated code: " + code);
     
     const payload: LambdaRequest = {
-      python_code: code,
-      //"from manim import *\n\nclass QuickSortAnimation(Scene):\n    def construct(self):\n        square = Triangle()\n        circle = Circle()\n        self.play(Transform(square, circle))",
+      python_code:code, 
+      //"from manim import *\n\nclass SlopeEquationScene(Scene):\n    def construct(self):\n        # Title\n        title = Text(\"Slope Equation\").scale(1.2).to_edge(UP)\n        self.play(Write(title))\n\n        # Axes\n        axes = Axes(\n            x_range=[-1, 6],\n            y_range=[-1, 6],\n            x_length=6,\n            y_length=6,\n            axis_config={\"color\": BLUE},\n        ).shift(DOWN * 0.5 + LEFT * 1)\n        self.play(Create(axes))\n\n        # Points\n        p1 = Dot(axes.coords_to_point(1, 2), color=YELLOW)\n        p2 = Dot(axes.coords_to_point(4, 5), color=RED)\n\n        label1 = MathTex(\"(x_1, y_1)\").next_to(p1, DOWN)\n        label2 = MathTex(\"(x_2, y_2)\").next_to(p2, UP)\n\n        self.play(FadeIn(p1), Write(label1))\n        self.play(FadeIn(p2), Write(label2))\n\n        # Connecting Line\n        line = Line(p1.get_center(), p2.get_center(), color=GREEN)\n        self.play(Create(line))\n\n        # Delta y and Delta x\n        delta_y = Arrow(start=axes.coords_to_point(4, 2), end=axes.coords_to_point(4, 5), buff=0, color=ORANGE)\n        delta_x = Arrow(start=axes.coords_to_point(1, 2), end=axes.coords_to_point(4, 2), buff=0, color=PURPLE)\n\n        dy_label = MathTex(\"y_2 - y_1\").next_to(delta_y, RIGHT)\n        dx_label = MathTex(\"x_2 - x_1\").next_to(delta_x, DOWN)\n\n        self.play(Create(delta_y), Write(dy_label))\n        self.play(Create(delta_x), Write(dx_label))\n\n        # Slope equation\n        slope_eq = MathTex(\"m = \\\\frac{y_2 - y_1}{x_2 - x_1}\").to_edge(DOWN)\n        self.play(Write(slope_eq))\n        self.wait(1)\n\n        # Numerical example\n        slope_value = MathTex(\"m = \\\\frac{5 - 2}{4 - 1} = \\\\frac{3}{3} = 1\").next_to(slope_eq, UP)\n        self.play(Write(slope_value))\n        self.wait(2)",
       id: id,
       filename: filename,
       project_name: project_name
