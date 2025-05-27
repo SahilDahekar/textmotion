@@ -7,8 +7,8 @@ Generate 2d animation from text using ai
 
 ## Upcoming Features
 
-- [ ] Add Clerk Auth .
-- [ ] Add dev and prod in backend for lambda exec .
+- [X] Add Clerk Auth .
+- [X] Add dev and prod in backend for lambda exec .
 - [ ] Add Video Uploads Feature.
 - [ ] Build Video Editor feature .
 - [ ] Add Video Composition Feature .
