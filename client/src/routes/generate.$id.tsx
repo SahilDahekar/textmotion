@@ -21,9 +21,13 @@ interface ExecutionRequest {
 }
 
 
-export const Route = createFileRoute('/generate/$id')({
-  beforeLoad: ({ context }: { context: { auth?: { userId: string } } }) => {
-    if (!context.auth?.userId) {
+export const Route = createFileRoute('/generate/$id')({  beforeLoad: ({ context }: { context: { auth?: { userId: string; isLoaded: boolean; isSignedIn: boolean; } } }) => {
+    if (!context.auth?.isLoaded) {
+      // Wait for auth to load
+      return;
+    }
+    console.log(context);
+    if (!context.auth?.isSignedIn || !context.auth?.userId) {
       throw redirect({
         to: '/',
         search: {

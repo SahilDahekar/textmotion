@@ -17,7 +17,11 @@ if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
 const router = createRouter({
   routeTree,
   context: {
-    auth: undefined as { userId: string | null } | undefined,
+    auth: undefined as {
+      userId: string | null;
+      isLoaded: boolean;
+      isSignedIn: boolean;
+    } | undefined,
   },
   defaultPreload: 'intent',
   scrollRestoration: true,
@@ -38,13 +42,13 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  const { userId } = useAuth();
+  const { userId, isLoaded, isSignedIn } = useAuth();
   
   return (
     <RouterProvider 
       router={router} 
       context={{ 
-        auth: { userId } 
+        auth: { userId, isLoaded, isSignedIn } 
       }} 
     />
   );
