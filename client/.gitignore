@@ -1,6 +1,21 @@
-node_modules
-.DS_Store
+# Node modules and dependencies
+node_modules/
+
+# Environment files
 .env
-dist
-dist-ssr
+.env.local
+.env.development
+.env.production
+
+# Build outputs
+dist/
+dist-ssr/
+
+# OS specific files
+.DS_Store
 *.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
