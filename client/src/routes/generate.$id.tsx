@@ -1,6 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Textarea } from '@/components/ui/textarea'
+import { useUser } from '@clerk/clerk-react'
 import { Button } from '@/components/ui/button'
 import { Loader, SendHorizontal } from 'lucide-react'
 import axios from 'axios'
@@ -21,6 +22,16 @@ interface ExecutionRequest {
 
 
 export const Route = createFileRoute('/generate/$id')({
+  beforeLoad: ({ context }: { context: { auth?: { userId: string } } }) => {
+    if (!context.auth?.userId) {
+      throw redirect({
+        to: '/',
+        search: {
+          redirect: '/generate/$id'
+        }
+      })
+    }
+  },
   component: GeneratePage,
   validateSearch: (search: Record<string, unknown>) => {
     return {
@@ -32,6 +43,7 @@ export const Route = createFileRoute('/generate/$id')({
 function GeneratePage() {
   const { id } = Route.useParams()
   const search = Route.useSearch()
+  const { user } = useUser()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -57,16 +69,18 @@ function GeneratePage() {
       }])
       toast.info('Generating animation from code', {
         description: 'This may take a few seconds.',
-      })
-      console.log("sending this code" + sanitizedCode[1]);
+      })      // Extract the class name from the Python code to use as filename
+      const classNameMatch = sanitizedCode[1].match(/class\s+(\w+)\(/);
+      const filename = classNameMatch ? classNameMatch[1] : 'Animation';
+      
       const payload: ExecutionRequest = {
         code: sanitizedCode[1],
-        id: "may2025",
-        filename: "name",
+        id: user?.id || '',  // Use the authenticated user's ID
+        filename: filename,  // Use the extracted class name as filename
         project_name: id,
       };
       
-      const execResponse = await axios.post("http://localhost:5000/api/execute", payload ,{
+      const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
         timeout: 10000 * 15,
       });
       console.log('Lambda response:', execResponse.data);

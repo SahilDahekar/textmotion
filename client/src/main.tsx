@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { ClerkProvider, useAuth } from '@clerk/clerk-react'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -8,10 +9,16 @@ import { routeTree } from './routeTree.gen'
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
+if (!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) {
+  throw new Error('Missing Publishable Key')
+}
+
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  context: {},
+  context: {
+    auth: undefined as { userId: string | null } | undefined,
+  },
   defaultPreload: 'intent',
   scrollRestoration: true,
   defaultStructuralSharing: true,
@@ -24,6 +31,24 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 }
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
+function App() {
+  const { userId } = useAuth();
+  
+  return (
+    <RouterProvider 
+      router={router} 
+      context={{ 
+        auth: { userId } 
+      }} 
+    />
+  );
+}
 
 // Render the app
 const rootElement = document.getElementById('app')
@@ -31,7 +56,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+        <App />
+      </ClerkProvider>
     </StrictMode>,
   )
 }

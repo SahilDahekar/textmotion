@@ -1,6 +1,8 @@
 import { TextareaForm } from '@/components/TextAreaForm'
 import { createFileRoute } from '@tanstack/react-router'
 import { Clapperboard } from 'lucide-react'
+import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -18,9 +20,22 @@ function App() {
             <p className='text-xl text-muted-foreground'>
               Create stunning mathematical animations with just a text prompt
             </p>
-          </div>
-          <div className='max-w-3xl mx-auto'>
-            <TextareaForm />
+          </div>          <div className='max-w-3xl mx-auto'>
+            <SignedIn>
+              <TextareaForm />
+            </SignedIn>
+            <SignedOut>
+              <div className="text-center space-y-4">
+                <p className="text-lg text-muted-foreground">
+                  Sign In to start creating animations
+                </p>
+                <SignInButton mode="modal">
+                  <Button size="lg" className="px-8">
+                    Sign in for free
+                  </Button>
+                </SignInButton>
+              </div>
+            </SignedOut>
           </div>
         </div>
       </div>
