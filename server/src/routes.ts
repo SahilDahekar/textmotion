@@ -2,7 +2,15 @@ import { response, Router } from "express";
 import { Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import axios from "axios";
+import * as path from 'path';
+import * as fs from 'fs/promises';
+import express from "express";
 
+if(process.env.NODE_ENV !== 'production') {
+  // Create the videos directory if it doesn't exist
+  const publicDir = path.join(__dirname, '..', 'public', 'videos');
+  fs.mkdir(publicDir, { recursive: true }).catch(console.error);
+}
 
 interface LambdaRequest {
   python_code: string;
@@ -67,72 +75,88 @@ approuter.post("/generate", async (req: Request, res: Response): Promise<void> =
 
 approuter.post("/execute", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id , code , filename , project_name  } = req.body;
+    const { id, code, filename, project_name } = req.body;
     if (!code) {
       res.status(400).json({ error: 'No code provided' });
       return;
     }
-    console.log("generated code: " + code);
-    
-    const payload: LambdaRequest = {
-      python_code:code, 
-      //"from manim import *\n\nclass SlopeEquationScene(Scene):\n    def construct(self):\n        # Title\n        title = Text(\"Slope Equation\").scale(1.2).to_edge(UP)\n        self.play(Write(title))\n\n        # Axes\n        axes = Axes(\n            x_range=[-1, 6],\n            y_range=[-1, 6],\n            x_length=6,\n            y_length=6,\n            axis_config={\"color\": BLUE},\n        ).shift(DOWN * 0.5 + LEFT * 1)\n        self.play(Create(axes))\n\n        # Points\n        p1 = Dot(axes.coords_to_point(1, 2), color=YELLOW)\n        p2 = Dot(axes.coords_to_point(4, 5), color=RED)\n\n        label1 = MathTex(\"(x_1, y_1)\").next_to(p1, DOWN)\n        label2 = MathTex(\"(x_2, y_2)\").next_to(p2, UP)\n\n        self.play(FadeIn(p1), Write(label1))\n        self.play(FadeIn(p2), Write(label2))\n\n        # Connecting Line\n        line = Line(p1.get_center(), p2.get_center(), color=GREEN)\n        self.play(Create(line))\n\n        # Delta y and Delta x\n        delta_y = Arrow(start=axes.coords_to_point(4, 2), end=axes.coords_to_point(4, 5), buff=0, color=ORANGE)\n        delta_x = Arrow(start=axes.coords_to_point(1, 2), end=axes.coords_to_point(4, 2), buff=0, color=PURPLE)\n\n        dy_label = MathTex(\"y_2 - y_1\").next_to(delta_y, RIGHT)\n        dx_label = MathTex(\"x_2 - x_1\").next_to(delta_x, DOWN)\n\n        self.play(Create(delta_y), Write(dy_label))\n        self.play(Create(delta_x), Write(dx_label))\n\n        # Slope equation\n        slope_eq = MathTex(\"m = \\\\frac{y_2 - y_1}{x_2 - x_1}\").to_edge(DOWN)\n        self.play(Write(slope_eq))\n        self.wait(1)\n\n        # Numerical example\n        slope_value = MathTex(\"m = \\\\frac{5 - 2}{4 - 1} = \\\\frac{3}{3} = 1\").next_to(slope_eq, UP)\n        self.play(Write(slope_value))\n        self.wait(2)",
-      id: id,
-      filename: filename,
-      project_name: project_name
-    };
-    
-    const externalUrl: string | undefined = process.env.LAMDA_FUNCTION_URL;
-    if (!externalUrl) {
-      throw new Error("LAMDA_FUNCTION_URL is not defined in environment variables.");
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Using local Docker for execution...');
+      try {
+        const result = await runDocker(code);
+        const className = extractClassName(code);
+        
+        // Create public videos directory if it doesn't exist
+        const publicDir = path.join(__dirname, '..', 'public', 'videos');
+        await fs.mkdir(publicDir, { recursive: true });
+          // Copy the video to public directory with proper permissions
+        const publicVideoPath = path.join(publicDir, `${className}.mp4`);
+        await fs.copyFile(result.videoPath, publicVideoPath);
+        console.log(`Video copied to: ${publicVideoPath}`);
+        
+        // Return the local URL (using relative path)
+        const video_url = `/videos/${className}.mp4`;
+        
+        res.status(200).json({
+          video_url,
+          message: 'Animation created successfully using Docker'
+        });
+        return;
+      } catch (error) {        console.error('Docker execution error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Docker execution failed: ${errorMessage}`);
+      }
+    } else {
+      console.log('Using Lambda for execution...');
+      const payload: LambdaRequest = {
+        python_code: code,
+        id: id,
+        filename: filename,
+        project_name: project_name
+      };
+      
+      const externalUrl = process.env.LAMDA_FUNCTION_URL;
+      if (!externalUrl) {
+        throw new Error("LAMDA_FUNCTION_URL is not defined in environment variables.");
+      }
+
+      const response = await axios.post(externalUrl, payload, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000 * 15,
+      });
+
+      if (response.status !== 200 || !response.data) {
+        throw new Error('Lambda function failed: ' + JSON.stringify(response.data));
+      }
+
+      const { video_url, message } = response.data;
+      res.status(200).json({ video_url, message });
     }
-
-    const response = await axios.post(externalUrl, payload, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 10000*15, 
-    });
-    if (response.status !== 200 || !response.data) {
-      res.status(500).json({ error: 'Lambda function failed', details: response.data });
-      return;
-    }
-    console.log("Lambda response:", response);
-    const { video_url, message } = response.data;
-
-    res.status(200).json({
-      video_url: video_url,
-      message
-    });
-    // const result = await runDocker(code);
-    
-    
-    // const fs = require('fs');
-    // const videoPath = result.videoPath;
-    // const stat = fs.statSync(videoPath);
-    
-    // res.writeHead(200, {
-    //   'Content-Type': 'video/mp4',
-    //   'Content-Length': stat.size,
-    //   'Content-Disposition': 'attachment; filename=animation.mp4'
-    // });
-
-    
-    // const videoStream = fs.createReadStream(videoPath);
-    // videoStream.pipe(res);
   } catch (error) {
-    // console.error('Error executing code:', error);
-    // const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    // res.status(500).json({ 
-    //   error: 'Failed to execute animation',
-    //   details: errorMessage
-    // });
-    console.error('Error calling Lambda:', error);
+    console.error('Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ 
-      error: 'Lambda invocation failed',
+      error: 'Execution failed',
       details: errorMessage
     });
   }
 });
+
+// Serve static video files
+const videosPath = path.join(__dirname, '..', 'public', 'videos');
+console.log('Serving videos from:', videosPath);
+
+approuter.use('/videos', (req, res, next) => {
+  console.log('Video request:', req.url);
+  next();
+}, express.static(videosPath, {
+  setHeaders: (res, path) => {
+    console.log('Serving video file:', path);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', 'video/mp4');
+  }
+}));
 
 function sanitizeCode(text: string): string {
     const pythonCodeMatch = text.match(/```python\n([\s\S]*?)\n```/);
@@ -156,7 +180,8 @@ async function runDocker(markdownCode: string): Promise<{videoPath: string}> {
     const { exec } = require('child_process');
     
     try {
-        const code = sanitizeCode(markdownCode);
+        // const code = sanitizeCode(markdownCode);
+        const code = markdownCode.trim();
         const className = extractClassName(code);
         
         const manimDir = path.join(__dirname, '..', 'manim_files');

@@ -5,3 +5,4 @@ dist
 dist-ssr
 *.local
 manim_files
+public

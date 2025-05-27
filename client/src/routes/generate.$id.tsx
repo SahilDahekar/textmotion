@@ -79,23 +79,26 @@ function GeneratePage() {
         filename: filename,  // Use the extracted class name as filename
         project_name: id,
       };
-      
-      const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
+        const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
         timeout: 10000 * 15,
       });
-      console.log('Lambda response:', execResponse.data);
-      // const execResponse = await axios.post("http://localhost:5000/api/execute", 
-      //   payload,
-      //   { responseType: 'blob' }
-      // );
-
-      // const videoBlob = new Blob([execResponse.data], { type: 'video/mp4' });
-      // const url = URL.createObjectURL(videoBlob);
-      setVideoUrl(execResponse.data.video_url);
+      console.log('Server response:', execResponse.data);
+      
+      // Handle the video URL based on environment
+      const videoUrl = execResponse.data.video_url;
+      const isDevelopment = import.meta.env.MODE !== 'production';
+      
+      // In development, the URL will be a local path like "/videos/ClassName.mp4"
+      // In production, it will be a full URL from Lambda
+      const fullVideoUrl = isDevelopment 
+        ? `http://localhost:5000${videoUrl}`
+        : videoUrl;
+      
+      setVideoUrl(fullVideoUrl);
       
       setMessages(prev => [...prev, { 
         type: 'assistant', 
-        content: 'Your animation is ready!' 
+        content: execResponse.data.message || 'Your animation is ready!' 
       }])
       toast.success('Animation created successfully!', {
         description: 'You can now view and download your animation.',
