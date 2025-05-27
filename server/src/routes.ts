@@ -96,7 +96,7 @@ approuter.post("/execute", async (req: Request, res: Response): Promise<void> =>
         console.log(`Video copied to: ${publicVideoPath}`);
         
         // Return the local URL (using relative path)
-        const video_url = `/videos/${className}.mp4`;
+        const video_url = `http://localhost:5000/videos/${className}.mp4`;
         
         res.status(200).json({
           video_url,

@@ -86,15 +86,7 @@ function GeneratePage() {
       
       // Handle the video URL based on environment
       const videoUrl = execResponse.data.video_url;
-      const isDevelopment = import.meta.env.MODE !== 'production';
-      
-      // In development, the URL will be a local path like "/videos/ClassName.mp4"
-      // In production, it will be a full URL from Lambda
-      const fullVideoUrl = isDevelopment 
-        ? `http://localhost:5000${videoUrl}`
-        : videoUrl;
-      
-      setVideoUrl(fullVideoUrl);
+      setVideoUrl(videoUrl);
       
       setMessages(prev => [...prev, { 
         type: 'assistant', 
