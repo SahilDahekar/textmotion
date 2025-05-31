@@ -83,21 +83,18 @@ function GeneratePage() {
         filename: filename,  // Use the extracted class name as filename
         project_name: id,
       };
-      //   const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
-      //   timeout: 10000 * 15,
-      // });
-      // console.log('Server response:', execResponse.data);
+        const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
+        timeout: 10000 * 15,
+      });
+      console.log('Server response:', execResponse.data);
       
       // Handle the video URL based on environment
-      // const videoUrl = execResponse.data.video_url;
-      const videoUrl = "http://localhost:5000/videos/SlopeEquationScene.mp4";
-    
+      const videoUrl = execResponse.data.video_url;
       setVideoUrl(videoUrl);
       
       setMessages(prev => [...prev, { 
         type: 'assistant', 
-        // content: execResponse.data.message || 'Your animation is ready!' 
-        content: 'Your animation is ready!' 
+        content: execResponse.data.message || 'Your animation is ready!' 
       }])
       toast.success('Animation created successfully!', {
         description: 'You can now view and download your animation.',
