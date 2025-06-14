@@ -1,0 +1,11 @@
+replicaCount: 2
+
+image:
+  frontend:
+    repository: devasheesh22/textmotion-frontend
+    tag: "69.0"
+  backend:
+    repository: devasheesh22/textmotion-backend
+    tag: "69.0"
+
+appName: textmotion

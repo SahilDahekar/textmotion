@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: devasheesh22/textmotion-frontend:1.0
+        image: devasheesh22/textmotion-frontend:69.0
         ports:
         - containerPort: 80
         env:

@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: {{ .Values.appName }}
   labels:
-    app: frontend
+    app: {{ .Values.appName }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: frontend
+      app: {{ .Values.appName }}
   template:
     metadata:
       labels:
-        app: frontend
+        app: {{ .Values.appName }}
     spec:
       containers:
-      - name: frontend
-        image: devasheesh22/textmotion-frontend:1.0
+      - name: {{ .Values.appName }}
+        image: {{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}
         ports:
         - containerPort: 80
         env:
@@ -36,11 +36,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-service
+  name: {{ .Values.appName }}
 spec:
   type: LoadBalancer
   ports:
-  - port: 80
+  - name: http
+    port: 80
     targetPort: 80
   selector:
-    app: frontend
+    app: {{ .Values.appName }}
