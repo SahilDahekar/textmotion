@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: textmotion-config
+data:
+  NODE_ENV: "production"
+  LAMBDA_FUNCTION_URL: "https://ehluq2gtwu6nnld65lfe5lorxm0ursln.lambda-url.ap-south-1.on.aws/"

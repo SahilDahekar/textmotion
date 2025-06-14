@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: textmotion-backend:1.0
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: textmotion-config
+              key: NODE_ENV
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: textmotion-secrets
+              key: GEMINI_API_KEY
+        - name: LAMBDA_FUNCTION_URL
+          valueFrom:
+            configMapKeyRef:
+              name: textmotion-config
+              key: LAMBDA_FUNCTION_URL
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5000
+    targetPort: 5000
+  selector:
+    app: backend
