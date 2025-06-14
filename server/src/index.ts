@@ -12,7 +12,8 @@ const corsOptions = {
         'http://localhost',
         'http://localhost:80',
         'http://localhost:3000',
-        'http://a37f3930a11794850bb94acb3d403670-230404132.ap-south-1.elb.amazonaws.com'
+        'http://a37f3930a11794850bb94acb3d403670-230404132.ap-south-1.elb.amazonaws.com',
+        'amazonaws.com'
     ],
     credentials: true,
     optionsSuccessStatus: 200,
