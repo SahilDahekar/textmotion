@@ -8,9 +8,7 @@ import { resolve } from "node:path";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [TanStackRouterVite({ autoCodeSplitting: true }), viteReact(), tailwindcss()],
-  define: {
-    'import.meta.env.VITE_CLERK_PUBLISHABLE_KEY': '"VITE_CLERK_PUBLISHABLE_KEY_PLACEHOLDER"',
-  },
+  // Environment variables starting with VITE_ are automatically loaded
   test: {
     globals: true,
     environment: "jsdom",
