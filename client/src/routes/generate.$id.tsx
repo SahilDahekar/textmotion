@@ -60,7 +60,7 @@ function GeneratePage() {
 
     setIsLoading(true)
     try {
-      const genResponse = await axios.post("http://localhost:5000/api/generate", { text });
+      const genResponse = await axios.post("a0618efcd8e98474abb8f7492a7ea42f-237795218.ap-south-1.elb.amazonaws.com:5000/api/generate", { text });
       const sanitizedCode = genResponse.data.generatedText.match(/```python\n([\s\S]*?)\n```/);
       if (!sanitizedCode) {
         throw new Error('Failed to parse generated code');
@@ -80,7 +80,7 @@ function GeneratePage() {
         filename: filename,  // Use the extracted class name as filename
         project_name: id,
       };
-        const execResponse = await axios.post("http://localhost:5000/api/execute", payload, {
+        const execResponse = await axios.post("a0618efcd8e98474abb8f7492a7ea42f-237795218.ap-south-1.elb.amazonaws.com/api/execute", payload, {
         timeout: 10000 * 15,
       });
       console.log('Server response:', execResponse.data);
