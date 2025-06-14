@@ -5,11 +5,10 @@ import { Timeline } from '@/components/Timeline';
 import { useTimeline } from "@/hooks/useTimline";
 
 interface GeneratedContentProps {
-    generatedCode: string | null;
     videoUrl: string | null;
 }
 
-export function GeneratedContent({ generatedCode, videoUrl }: GeneratedContentProps) {
+export function GeneratedContent({ videoUrl }: GeneratedContentProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const timeline = useTimeline(60,videoRef); 
     return (

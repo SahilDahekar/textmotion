@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    environment:
+      - VITE_CLERK_PUBLISHABLE_KEY=pk_test_dW5pZmllZC1tYXN0aWZmLTk2LmNsZXJrLmFjY291bnRzLmRldiQ
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - GEMINI_API_KEY=AIzaSyB3NOR2Uj8GuPImKSKqUQH5juEwRJVSbl0
+      - LAMDA_FUNCTION_URL=https://ehluq2gtwu6nnld65lfe5lorxm0ursln.lambda-url.ap-south-1.on.aws/

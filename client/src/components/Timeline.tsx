@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTimeline } from '@/hooks/useTimline';
 import { TimelineHeader } from '@/components/TimelineHeader';
 import { TimeRuler } from '@/components/TimeRuler';

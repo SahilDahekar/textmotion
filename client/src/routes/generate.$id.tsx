@@ -51,7 +51,7 @@ function GeneratePage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
+
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [hasGenerated, setHasGenerated] = useState(false)
 
@@ -64,10 +64,7 @@ function GeneratePage() {
       const sanitizedCode = genResponse.data.generatedText.match(/```python\n([\s\S]*?)\n```/);
       if (!sanitizedCode) {
         throw new Error('Failed to parse generated code');
-      }
-      setGeneratedCode(sanitizedCode[1].trim() + '\n');
-      
-      setMessages(prev => [...prev, { 
+      }      setMessages(prev => [...prev, { 
         type: 'assistant', 
         content: 'Generated the animation code. Creating the animation now...' 
       }])
@@ -202,7 +199,7 @@ function GeneratePage() {
 
       {/* Results Panel */}
       <div className="w-1/2 h-full flex flex-col">
-        <GeneratedContent generatedCode={generatedCode} videoUrl={videoUrl} />
+        <GeneratedContent videoUrl={videoUrl} />
       </div>
     </div>
   )
