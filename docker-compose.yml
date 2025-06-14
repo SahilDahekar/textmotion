@@ -21,4 +21,4 @@ services:
     environment:
       - NODE_ENV=production
       - GEMINI_API_KEY=AIzaSyB3NOR2Uj8GuPImKSKqUQH5juEwRJVSbl0
-      - LAMDA_FUNCTION_URL=https://ehluq2gtwu6nnld65lfe5lorxm0ursln.lambda-url.ap-south-1.on.aws/
+      - LAMBDA_FUNCTION_URL=https://ehluq2gtwu6nnld65lfe5lorxm0ursln.lambda-url.ap-south-1.on.aws/

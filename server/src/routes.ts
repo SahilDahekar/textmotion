@@ -109,29 +109,42 @@ approuter.post("/execute", async (req: Request, res: Response): Promise<void> =>
       }
     } else {
       console.log('Using Lambda for execution...');
-      const payload: LambdaRequest = {
-        python_code: code,
-        id: id,
-        filename: filename,
-        project_name: project_name
-      };
-      
-      const externalUrl = process.env.LAMDA_FUNCTION_URL;
-      if (!externalUrl) {
-        throw new Error("LAMDA_FUNCTION_URL is not defined in environment variables.");
+      try {
+        const lambdaUrl = process.env.LAMBDA_FUNCTION_URL;
+        if (!lambdaUrl) {
+          throw new Error('LAMBDA_FUNCTION_URL environment variable is not set');
+        }
+
+        console.log('Sending request to Lambda:', {
+          url: lambdaUrl,
+          payload: { python_code: code, id, filename, project_name }
+        });
+
+        const response = await axios.post(lambdaUrl, 
+          { python_code: code, id, filename, project_name },
+          { 
+            timeout: 300000, // 5 minute timeout
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        console.log('Lambda response:', response.data);
+        res.json(response.data);
+
+      } catch (error: any) {
+        console.error('Lambda execution error:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          headers: error.response?.headers
+        });
+        res.status(500).json({ 
+          error: 'Lambda execution failed',
+          details: error.response?.data || error.message
+        });
       }
-
-      const response = await axios.post(externalUrl, payload, {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000 * 15,
-      });
-
-      if (response.status !== 200 || !response.data) {
-        throw new Error('Lambda function failed: ' + JSON.stringify(response.data));
-      }
-
-      const { video_url, message } = response.data;
-      res.status(200).json({ video_url, message });
     }
   } catch (error) {
     console.error('Error:', error);
