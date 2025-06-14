@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: textmotion-backend:1.0
+        image: devasheesh22/textmotion-backend:1.0
         ports:
         - containerPort: 5000
         env:

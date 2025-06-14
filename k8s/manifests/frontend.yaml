@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: textmotion-frontend:1.0
+        image: devasheesh22/textmotion-frontend:1.0
         ports:
         - containerPort: 80
         env:
@@ -38,7 +38,7 @@ kind: Service
 metadata:
   name: frontend-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
   - port: 80
     targetPort: 80
